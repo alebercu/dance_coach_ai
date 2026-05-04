@@ -9,9 +9,13 @@ from scipy.spatial.distance import euclidean
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token
+import psycopg2
 
 app = Flask(__name__)
 CORS(app)
+bcrypt = Bcrypt(app)
 
 # --- CONFIGURARE MEDIAPIPE VISION ---
 model_path = 'pose_landmarker_heavy.task' # Asigură-te că fișierul e aici!
@@ -65,6 +69,52 @@ def process_video_tasks(video_path):
             
     cap.release()
     return np.array(signature)
+
+# Configurează un secret key pentru token-uri
+app.config['JWT_SECRET_KEY'] = 'secret_key_foarte_greu_de_ghicit'
+jwt = JWTManager(app)
+
+# Conexiunea la PostgreSQL (Modifică cu datele tale din pgAdmin)
+def get_db_connection():
+    return psycopg2.connect(
+        host="localhost",
+        database="dance_coach_ai",
+        user="postgres",
+        password="postgres"
+    )
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    pw_hash = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
+                    (data['username'], data['email'], pw_hash))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "User creat cu succes!"}), 201
+    except Exception as e:
+        return jsonify({"error": "Userul sau emailul există deja"}), 400
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, password_hash FROM users WHERE email = %s", (data['email'],))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if user and bcrypt.check_password_hash(user[1], data['password']):
+        access_token = create_access_token(identity=user[0])
+        return jsonify(access_token=access_token), 200
+    
+    return jsonify({"error": "Date invalide"}), 401
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
