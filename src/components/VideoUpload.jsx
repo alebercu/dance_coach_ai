@@ -31,35 +31,74 @@ const VideoUpload = () => {
     }
   };
 
+  const getFileName = (file) => file ? file.name : "Niciun fișier selectat";
+
   return (
-    <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'Arial' }}>
-      <h2>Coach AI: Compară Dansul</h2>
+    <div className="upload-card card">
+      <div className="card-header">
+        <h2>Analiză Mișcări</h2>
+        <p className="intro">Încarcă ambele videoclipuri pentru a primi feedback instant de la AI.</p>
+      </div>
       
-      <div style={{ marginBottom: '20px' }}>
-        <label>Video Antrenor (Referință): </label>
-        <input type="file" accept="video/*" onChange={(e) => setVideoProf(e.target.files[0])} />
+      <div className="form-body">
+        {/* --- INPUT STILIZAT 1 (Antrenor) --- */}
+        <div className="file-wrapper">
+            <span className="file-label-text">1. Video Referință (Antrenor)</span>
+            {/* Inputul real e ascuns */}
+            <input 
+                id="file-prof"
+                className="file-input-hidden" 
+                type="file" 
+                accept="video/*" 
+                onChange={(e) => setVideoProf(e.target.files[0])} 
+            />
+            {/* Label-ul e cel care se vede și e stilizat */}
+            <label htmlFor="file-prof" className="file-input-styled">
+                <span className="file-name">{getFileName(videoProf)}</span>
+                <span className="file-alias-button">Alege Video</span>
+            </label>
+        </div>
+
+        {/* --- INPUT STILIZAT 2 (Student) --- */}
+        <div className="file-wrapper">
+            <span className="file-label-text">2. Video Student (Tu)</span>
+            <input 
+                id="file-student"
+                className="file-input-hidden" 
+                type="file" 
+                accept="video/*" 
+                onChange={(e) => setVideoStudent(e.target.files[0])} 
+            />
+            <label htmlFor="file-student" className="file-input-styled">
+                <span className="file-name">{getFileName(videoStudent)}</span>
+                <span className="file-alias-button">Alege Video</span>
+            </label>
+        </div>
+
+        <div style={{ marginTop: '32px' }}>
+            <button className="primary-button" onClick={handleUpload} disabled={status.includes('...')} >
+            {status.includes('...') ? 'Analizăm...' : 'Compară Mișcările'}
+            </button>
+            {status && <p className="status-text">{status}</p>}
+        </div>
       </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Video Student (Tu): </label>
-        <input type="file" accept="video/*" onChange={(e) => setVideoStudent(e.target.files[0])} />
-      </div>
-
-      <button onClick={handleUpload} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-        Compară Mișcările
-      </button>
-
-      <p><strong>{status}</strong></p>
 
       {results && (
-        <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
-          <h3>Scor Similitudine: {results.score}%</h3>
-          <div style={{ textAlign: 'left', display: 'inline-block' }}>
+        <div className="results-card">
+          <h3 style={{ marginBottom: '10px' }}>Scor Similitudine: {results.score}%</h3>
+          <div className="results-list">
             {results.details.map((item, index) => (
-              <p key={index}>
-                {item.status === 'Pass' ? '✅' : '❌'} <strong>{item.zone}</strong>: 
-                Diferență de {item.error_magnitude}°
-              </p>
+              <div key={index} className="result-item">
+                <span className="result-badge">
+                  {item.status === 'Pass' ? '✨' : '⚠️'}
+                </span>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>{item.zone}</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                    Diferență: {item.error_magnitude}°
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>

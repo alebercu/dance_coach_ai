@@ -1,184 +1,322 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* =========================================
+   App.css - TEMA PROFESIONALĂ (Dance Coach AI)
+   ========================================= */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+/* 1. Import Font (Inter - esențial pentru aspectul modern) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* 2. Variabile de Culoare și Design */
+:root {
+  --text: #5a4c6e;          /* Mov închis stins */
+  --text-h: #372e42;        /* Aproape negru, tentă mov */
+  --bg: #f7f3ff;            /* Fundal foarte deschis mov */
+  --surface: #ffffff;
+  --surface-soft: #f5f0ff;
+  --border: #e5daf6;
+  --muted: #7d6f8d;
+  --accent: #b491ff;        /* Mov Vibrant */
+  --accent-2: #ffbac8;      /* Roz pal */
+  
+  /* Efecte */
+  --shadow: rgba(87, 69, 134, 0.08) 0 18px 45px -20px;
+  --shadow-strong: rgba(87, 69, 134, 0.14) 0 20px 35px -15px;
+  
+  /* Fonturi */
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+/* 3. Reset Global și Centrare */
+* {
+  box-sizing: border-box;
 }
 
-#center {
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 16px; /* Bază mai mică pentru scalare mai bună */
+  line-height: 1.6;
+  color: var(--text);
+  
+  /* Fundal Gradient Superb (Nu doar crem!) */
+  background: 
+    radial-gradient(circle at top right, rgba(180, 145, 255, 0.18), transparent 35%),
+    radial-gradient(circle at bottom left, rgba(255, 186, 200, 0.15), transparent 35%),
+    linear-gradient(180deg, #faf6ff 0%, #f7f3ff 100%);
+  
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Containerul principal React - OBLIGATORIU pentru centrare */
+#root {
+  display: flex;
+  justify-content: center; /* Centrare Orizontală */
+  align-items: center;    /* Centrare Verticală */
+  min-height: 100vh;      /* Ocupă toată înălțimea */
+  padding: 20px;
+}
+
+/* 4. Tipografie */
+h1, h2, h3 {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.25rem; }
+p { margin: 0; color: var(--muted); }
+
+/* 5. Layout General (App Shell) */
+.app-shell {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
+  gap: 32px;
+  align-items: center;
   width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* 6. Headerul Paginii */
+.page-header {
+  text-align: center;
+  padding: 40px 24px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px); /* Efect de sticlă */
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+  width: 100%;
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(180, 145, 255, 0.15);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.intro {
+  max-width: 600px;
+  margin: 18px auto 0;
+  font-size: 1.1rem;
+}
+
+/* 7. Bară Utilizator (Logout) */
+.account-bar {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.account-bar span { font-weight: 600; color: var(--text-h); }
+
+/* 8. Carduri (Auth și Upload) */
+.card {
+  width: 100%;
+  max-width: 800px; /* Centrate și limitate */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: var(--shadow-strong);
+  padding: 40px;
+  margin: 0 auto;
+}
+
+.card-header { margin-bottom: 32px; }
+
+/* 9. Formulare și Input-uri */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(180, 145, 255, 0.15);
+  outline: none;
+}
+
+/* 10. Stilizare Custom pentru File Input (foarte important!) */
+.file-wrapper {
+  margin-bottom: 20px;
+}
+
+.file-label-text {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-h);
+  margin-bottom: 8px;
+}
+
+/* Ascundem inputul nativ oribil */
+.file-input-hidden {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+/* Stilăm label-ul să arate ca un buton/input modern */
+.file-input-styled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 2px dashed var(--border); /* Arată că e zonă de drop/upload */
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-input-styled:hover {
+  border-color: var(--accent);
+  background: rgba(180, 145, 255, 0.05);
+}
+
+.file-input-hidden:focus + .file-input-styled {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(180, 145, 255, 0.15);
+}
+
+.file-alias-button {
+  background: var(--border);
+  color: var(--text-h);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* 11. Butoane */
+.primary-button, .secondary-button, .text-button {
+  font-family: var(--sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.primary-button {
+  width: 100%; /* Lățime completă pe mobil/card */
+  background: linear-gradient(135deg, var(--accent), #caafff);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 14px;
+  font-size: 1rem;
+  box-shadow: 0 8px 20px -6px rgba(129, 79, 202, 0.5);
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px rgba(129, 79, 202, 0.6);
+}
+
+.primary-button:disabled {
+  background: var(--border);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondary-button {
+  background: #fff;
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+}
+
+.secondary-button:hover { background: var(--surface-soft); }
+
+.text-button {
+  background: transparent;
+  color: var(--accent);
+  margin-top: 20px;
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: center;
+}
+.text-button:hover { color: var(--text-h); }
+
+/* 12. Rezultate și Status */
+.status-text {
+  margin-top: 20px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.results-card {
+  margin-top: 32px;
+  background: var(--surface-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.results-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.result-badge {
+  font-size: 1.5rem;
+}
+
+/* 13. Responsivitate */
+@media (max-width: 768px) {
+  #root { padding: 10px; }
+  .card { padding: 24px; }
+  h1 { font-size: 2.2rem; }
+  .file-input-styled { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
