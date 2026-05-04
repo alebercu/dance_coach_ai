@@ -6,6 +6,41 @@ const VideoUpload = () => {
   const [videoProf, setVideoProf] = useState(null);
   const [status, setStatus] = useState('');
   const [results, setResults] = useState(null);
+  const [danceName, setDanceName] = useState('');
+  const [danceDate, setDanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showSaveForm, setShowSaveForm] = useState(false);
+
+  const handleSave = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert("Te rugăm să te loghezi din nou!");
+    return;
+  }
+
+  // Debug: vedem ce trimitem
+  console.log("Trimit token:", token);
+
+  try {
+    const response = await axios.post('http://localhost:5000/save-result', {
+      dance_name: danceName,
+      dance_date: danceDate,
+      score: results.score,
+      details: results.details // Array-ul cu cot, genunchi etc.
+    }, {
+      headers: { 
+        'Authorization': `Bearer ${token.trim()}`, // Trim elimină spații invizibile
+        'Content-Type': 'application/json'
+      }
+    });
+
+    alert("Rezultat salvat cu succes!");
+    setShowSaveForm(false);
+  } catch (err) {
+    console.error("Eroare la salvare:", err.response?.data);
+    // Dacă eroarea e 422, mesajul din backend de la pasul 1 va apărea aici
+    alert("Eroare: " + (err.response?.data?.message || "Eroare de autentificare"));
+  }
+};
 
   const handleUpload = async () => {
     if (!videoStudent || !videoProf) {
@@ -103,6 +138,29 @@ const VideoUpload = () => {
           </div>
         </div>
       )}
+      {results && !showSaveForm && (
+    <button className="secondary-button" style={{ marginTop: '15px' }} onClick={() => setShowSaveForm(true)}>
+        💾 Salvează Rezultatul
+    </button>
+)}
+{showSaveForm && (
+    <div className="results-card" style={{ marginTop: '20px', textAlign: 'left' }}>
+        <h4>Salvează în Progresul Tău</h4>
+        <input className="input-field" type="text" placeholder="Numele Dansului (ex: Rumba Basic)" 
+               onChange={(e) => setDanceName(e.target.value)} style={{marginBottom: '10px'}} />
+        <input className="input-field" type="date" value={danceDate} 
+               onChange={(e) => setDanceDate(e.target.value)} style={{marginBottom: '10px'}} />
+        <p>Scor de salvat: <strong>{results.score}%</strong></p>
+        <button className="primary-button" onClick={handleSave}>Confirmă Salvarea</button>
+        <button 
+  className="text-button" 
+  style={{ marginTop: '10px' }} 
+  onClick={() => setShowSaveForm(false)}
+>
+  Anulează
+</button>
+    </div>
+)}
     </div>
   );
 };

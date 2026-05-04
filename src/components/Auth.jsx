@@ -11,8 +11,11 @@ const Auth = ({ setToken }) => {
     try {
       const res = await axios.post(`http://localhost:5000${endpoint}`, formData);
       if (isLogin) {
-        localStorage.setItem('token', res.data.access_token);
-        setToken(res.data.access_token);
+    // ASIGURĂ-TE că res.data.access_token este un string curat
+    const token = res.data.access_token;
+    localStorage.setItem('token', token); // Fără JSON.stringify!
+    setToken(token);
+
       } else {
         alert("Cont creat! Acum te poți loga.");
         setIsLogin(true);

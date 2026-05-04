@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Auth from './components/Auth';
 import VideoUpload from './components/VideoUpload';
+import Navbar from './components/Navbar';
 import './App.css';
 
 function App() {
@@ -12,27 +13,19 @@ function App() {
   };
 
   return (
-    // 'app-shell' este copilul lui '#root' care este centrat
     <div className="app-shell">
+      {/* Navbar-ul apare doar dacă userul e logat */}
+      {token && <Navbar onLogout={handleLogout} />}
+
       <header className="page-header">
         <span className="eyebrow">Powered by Mediapipe & DTW</span>
         <h1>Dance Coach AI</h1>
         <p className="intro">
-          Sincronizează-ți mișcările cu cele ale profesioniștilor folosind analiza biometrică avansată.
+          Analizează-ți tehnica și monitorizează-ți evoluția în timp real.
         </p>
       </header>
 
-      {token && (
-        <div className="account-bar">
-          <span>Utilizator Activ</span>
-          <button className="secondary-button" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      )}
-
-      {/* Main nu mai are nevoie de stiluri inline greoaie */}
-      <main style={{ width: '100%' }}>
+      <main style={{ width: '100%', maxWidth: '1100px', padding: '0 20px' }}>
         {!token ? (
           <Auth setToken={setToken} />
         ) : (
@@ -42,4 +35,5 @@ function App() {
     </div>
   );
 }
+
 export default App;

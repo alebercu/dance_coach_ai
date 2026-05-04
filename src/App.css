@@ -95,6 +95,35 @@ p { margin: 0; color: var(--muted); }
   width: 100%;
 }
 
+.history-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 250px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: var(--shadow-strong);
+  padding: 15px;
+  display: none; /* Ascuns implicit */
+  border: 1px solid var(--border);
+  z-index: 10;
+}
+
+.nav-item-history:hover .history-dropdown {
+  display: block; /* Apare la hover */
+}
+
+.history-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--surface-soft);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+}
+
+.history-item:last-child { border-bottom: none; }
+.history-item strong { color: var(--text-h); }
+
 .eyebrow {
   display: inline-flex;
   margin-bottom: 16px;

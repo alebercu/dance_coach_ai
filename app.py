@@ -12,9 +12,11 @@ from mediapipe.tasks.python import vision
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token
 import psycopg2
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import json
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
 
 # --- CONFIGURARE MEDIAPIPE VISION ---
@@ -72,7 +74,21 @@ def process_video_tasks(video_path):
 
 # Configurează un secret key pentru token-uri
 app.config['JWT_SECRET_KEY'] = 'secret_key_foarte_greu_de_ghicit'
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # DESCHIDE POARTA ASTA
+app.config['JWT_CSRF_CHECK_FORM'] = False      # ȘI PE ASTA
 jwt = JWTManager(app)
+@jwt.invalid_token_loader
+def my_invalid_token_callback(error_string):
+    print(f"JWT Invalid Error: {error_string}") # Va apărea în terminalul VS Code
+    return jsonify({'message': f'Token invalid: {error_string}'}), 422
+
+@jwt.unauthorized_loader
+def my_unauthorized_callback(error_string):
+    print(f"JWT Unauthorized Error: {error_string}")
+    return jsonify({'message': f'Lipseste token-ul: {error_string}'}), 401
 
 # Conexiunea la PostgreSQL (Modifică cu datele tale din pgAdmin)
 def get_db_connection():
@@ -111,8 +127,10 @@ def login():
     conn.close()
 
     if user and bcrypt.check_password_hash(user[1], data['password']):
-        access_token = create_access_token(identity=user[0])
+        # Salvăm ID-ul ca string în token pentru consistență
+        access_token = create_access_token(identity=str(user[0])) 
         return jsonify(access_token=access_token), 200
+
     
     return jsonify({"error": "Date invalide"}), 401
 
@@ -163,6 +181,52 @@ def analyze():
     finally:
         if os.path.exists(path_s): os.remove(path_s)
         if os.path.exists(path_p): os.remove(path_p)
+
+
+@app.route('/save-result', methods=['POST'])
+@jwt_required()
+def save_result():
+    try:
+        # Convertim explicit identity la int
+        user_id = int(get_jwt_identity()) 
+        data = request.json
+        
+        dance_name = data.get('dance_name')
+        dance_date = data.get('dance_date')
+        score = data.get('score')
+        details = data.get('details')
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO dance_results (user_id, dance_name, dance_date, score, details) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, dance_name, dance_date, score, json.dumps(details))
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Rezultat salvat cu succes!"}), 201
+    except Exception as e:
+        print(f"Error saving: {e}")
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/my-results', methods=['GET'])
+@jwt_required()
+def get_results():
+    try:
+        # Convertim explicit identity la int
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT dance_name, dance_date, score, details FROM dance_results WHERE user_id = %s ORDER BY dance_date DESC", (user_id,))
+        rows = cur.fetchall()
+        results = [{"dance_name": r[0], "dance_date": r[1].strftime('%Y-%m-%d'), "score": r[2], "details": r[3]} for r in rows]
+        cur.close()
+        conn.close()
+        return jsonify(results), 200
+    except Exception as e:
+        print(f"Error fetching: {e}")
+        return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
