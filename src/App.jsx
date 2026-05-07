@@ -3,6 +3,7 @@ import Auth from './components/Auth';
 import VideoUpload from './components/VideoUpload';
 import Navbar from './components/Navbar';
 import './App.css';
+import ChatBot from './components/ChatBot';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -32,6 +33,7 @@ function App() {
           <VideoUpload />
         )}
       </main>
+      {token && <ChatBot />}
     </div>
   );
 }

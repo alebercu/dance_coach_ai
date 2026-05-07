@@ -14,10 +14,26 @@ from flask_jwt_extended import JWTManager, create_access_token
 import psycopg2
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import json
+from google import genai
+from datetime import timedelta
+import requests # Asigură-te că ai acest import sus
+from langchain_ollama import ChatOllama
+from langchain_core.messages import SystemMessage, HumanMessage, ChatMessage
+
+
+
+
+#client = genai.Client(api_key="AIzaSyAs2mOppo9Cw0IuDeAQA7EkCPK56LReMBc")
+
+# Choose a stable model from your list
+#MODEL_ID = "gemini-2.0-flash-lite"
+OLLAMNA_MODEL = "gpt-oss:120b-cloud"
+model = ChatOllama(model=OLLAMNA_MODEL)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7) # Token-ul e bun 7 zile
 
 # --- CONFIGURARE MEDIAPIPE VISION ---
 model_path = 'pose_landmarker_heavy.task' # Asigură-te că fișierul e aici!
@@ -28,6 +44,35 @@ options = vision.PoseLandmarkerOptions(
     output_segmentation_masks=False
 )
 detector = vision.PoseLandmarker.create_from_options(options)
+
+
+
+# def ask_gemini_direct(prompt):
+#     api_key = "AIzaSyAiUAMzrHLksXM32y77lxhd8yYFyI6JlgI"
+    
+#     # Lista de URL-uri posibile (Google e uneori inconsistent cu versiunile)
+#     endpoints = [
+#         f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
+#         f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
+#     ]
+    
+#     headers = {'Content-Type': 'application/json'}
+#     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+#     for url in endpoints:
+#         try:
+#             response = requests.post(url, headers=headers, json=payload)
+#             res_json = response.json()
+            
+#             if response.status_code == 200:
+#                 return res_json['candidates'][0]['content']['parts'][0]['text']
+#             else:
+#                 print(f"Tried {url}, got {response.status_code}")
+#                 continue # Încearcă următorul URL din listă
+#         except:
+#             continue
+            
+#     return "I couldn't reach any of my AI models. Please check your API key and internet connection."
 
 def get_angles_from_landmarks(landmarks):
     """Calculează unghiurile folosind obiectele de tip landmark de la Tasks Vision."""
@@ -227,6 +272,50 @@ def get_results():
     except Exception as e:
         print(f"Error fetching: {e}")
         return jsonify({"error": str(e)}), 400
+    
+
+@app.route('/ask-coach', methods=['POST'])
+@jwt_required()
+def ask_coach():
+    try:
+        user_id = int(get_jwt_identity())
+        user_message = request.json.get('message')
+
+        # 1. Luăm contextul din DB
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT score, details FROM dance_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+        last_result = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        # 2. Construim un singur text (Prompt) care conține totul
+        # Așa nu mai avem nevoie de SystemMessage sau HumanMessage
+        # prompt = "You are a professional dance coach. Answer ONLY in English.\n"
+        # if last_result:
+        #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
+        # prompt += f"Student asks: {user_message}"
+
+        sys_message = SystemMessage(content="You are a professional dance coach. Answer ONLY in English.")
+        hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
+        user_message = HumanMessage(content=f"Student asks: {user_message}")
+
+        # THE NEW 2026 WAY:
+        # response = client.models.generate_content(
+        #     model=MODEL_ID,
+        #     contents=prompt
+        # )
+
+        response = model.invoke([sys_message, hist_message, user_message] if hist_message else [sys_message, user_message])
+        
+        return jsonify({"answer": response.content})
+
+    except Exception as e:
+
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            return jsonify({"answer": "I'm a bit overwhelmed with requests! Please wait a minute and ask me again. 💃"}), 429
+        print(f"Chat Error: {e}")
+        return jsonify({"answer": "I'm having some technical issues. Please try again."}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

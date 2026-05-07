@@ -382,6 +382,84 @@ p { margin: 0; color: var(--muted); }
   font-size: 1.5rem;
 }
 
+.chatbot-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+}
+
+.chat-toggle {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: var(--shadow-strong);
+  cursor: pointer;
+}
+
+.chat-window {
+  width: 350px;
+  height: 450px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.chat-header {
+  background: var(--surface-soft);
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: white;
+}
+
+.message.ai {
+  align-self: flex-start;
+  background: var(--surface-soft);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+}
+
+.chat-input {
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input input {
+  flex: 1;
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: 10px;
+}
+
 /* 13. Responsivitate */
 @media (max-width: 768px) {
   #root { padding: 10px; }
