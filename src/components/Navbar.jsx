@@ -30,13 +30,13 @@ const Navbar = ({ onLogout }) => {
             <span style={{ fontWeight: 600 }}>My Results ▾</span>
             
             <div className="history-dropdown">
-              <h4>Istoric Progres</h4>
-              {loading ? <p>Se încarcă...</p> : history.length === 0 ? <p>Niciun rezultat salvat.</p> : (
+              <h4>Progress History</h4>
+              {loading ? <p>loading...</p> : history.length === 0 ? <p>No saved results.</p> : (
                 history.map((h, i) => (
                   <div key={i} className="history-item" onClick={() => setSelectedResult(h)}>
                     <strong>{h.dance_name}</strong>
                     <span>{h.score}% - {h.dance_date}</span>
-                    <small style={{color: 'var(--accent)', fontSize: '0.7rem'}}>Vezi detalii →</small>
+                    <small style={{color: 'var(--accent)', fontSize: '0.7rem'}}>See details →</small>
                   </div>
                 ))
               )}
@@ -54,7 +54,7 @@ const Navbar = ({ onLogout }) => {
               <h2>{selectedResult.dance_name}</h2>
               <button className="text-button" onClick={() => setSelectedResult(null)} style={{width: 'auto', margin: 0}}>✕</button>
             </div>
-            <p>Data: {selectedResult.dance_date} | Scor: <strong>{selectedResult.score}%</strong></p>
+            <p>Date: {selectedResult.dance_date} | Score: <strong>{selectedResult.score}%</strong></p>
             
             <div className="results-list" style={{ marginTop: '20px' }}>
   {selectedResult.details && 
@@ -74,7 +74,7 @@ const Navbar = ({ onLogout }) => {
     ))
   }
 </div>
-            <button className="primary-button" style={{marginTop: '20px'}} onClick={() => setSelectedResult(null)}>Închide</button>
+            <button className="primary-button" style={{marginTop: '20px'}} onClick={() => setSelectedResult(null)}>Close</button>
           </div>
         </div>
       )}

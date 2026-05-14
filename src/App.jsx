@@ -22,7 +22,7 @@ function App() {
         <span className="eyebrow">Powered by Mediapipe & DTW</span>
         <h1>Dance Coach AI</h1>
         <p className="intro">
-          Analizează-ți tehnica și monitorizează-ți evoluția în timp real.
+          Analyze your dance moves, track your progress, and get personalized feedback with our AI-powered dance coach.
         </p>
       </header>
 

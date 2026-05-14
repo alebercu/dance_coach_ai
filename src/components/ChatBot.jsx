@@ -34,7 +34,7 @@ const ChatBot = () => {
       ) : (
         <div className="chat-window card">
           <div className="chat-header">
-            <h4>Coach AI Personal</h4>
+            <h4>Coach AI</h4>
             <button onClick={() => setIsOpen(false)}>✕</button>
           </div>
           <div className="chat-messages">

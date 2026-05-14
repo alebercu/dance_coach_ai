@@ -198,7 +198,7 @@ def analyze():
         sig_prof = process_video_tasks(path_p)
 
         if len(sig_student) < 5 or len(sig_prof) < 5:
-            return jsonify({"error": "Video prea scurt sau corpul nu a fost detectat"}), 400
+            return jsonify({"error": "Video too short or body not detected"}), 400
 
         # Aliniere DTW
         distance, path = fastdtw(sig_prof, sig_student, dist=euclidean)
@@ -210,7 +210,7 @@ def analyze():
         # Scorul: ajustăm normalizarea (50 este o eroare mare medie per unghi)
         score = max(0, 100 - (distance / (5 * len(sig_prof))))
         
-        labels = ['Cot Drept', 'Cot Stâng', 'Genunchi Drept', 'Genunchi Stâng']
+        labels = ['Right Elbow', 'Left Elbow', 'Right Knee', 'Left Knee']
         details = []
         for i, label in enumerate(labels):
             details.append({
@@ -296,7 +296,7 @@ def ask_coach():
         #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
         # prompt += f"Student asks: {user_message}"
 
-        sys_message = SystemMessage(content="You are a professional dance coach. Answer ONLY in English.")
+        sys_message = SystemMessage(content="You are a professional dancesport coach. Answer friendly and constructively, but keep it short. Keep in mind what dance the last result is for and provide actionable feedback based on the score and error details.")
         hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
         user_message = HumanMessage(content=f"Student asks: {user_message}")
 
