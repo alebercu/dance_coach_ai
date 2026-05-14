@@ -67,7 +67,7 @@ const Navbar = ({ onLogout }) => {
         <div>
           <div style={{ fontWeight: 600 }}>{item.zone}</div>
           <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-            Diferență: {item.error_magnitude}°
+            Difference: {item.error_magnitude}°
           </div>
         </div>
       </div>
