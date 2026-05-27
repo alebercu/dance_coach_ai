@@ -24,6 +24,10 @@ const Navbar = ({ onLogout }) => {
     <>
       <nav className="account-bar" style={{ position: 'sticky', top: '20px', zIndex: 1000 }}>
         <div style={{ fontWeight: '800', color: 'var(--accent)' }}>DANCE AI</div>
+
+        <a href="#todo-section" style={{ fontWeight: 600, color: 'var(--text-h)', textDecoration: 'none' }}>
+  To-Do List
+</a>
         
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <div className="nav-item-history" onMouseEnter={fetchHistory} style={{ position: 'relative', cursor: 'pointer' }}>

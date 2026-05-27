@@ -4,6 +4,7 @@ import VideoUpload from './components/VideoUpload';
 import Navbar from './components/Navbar';
 import './App.css';
 import ChatBot from './components/ChatBot';
+import TodoList from './components/TodoList';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -26,13 +27,18 @@ function App() {
         </p>
       </header>
 
-      <main style={{ width: '100%', maxWidth: '1100px', padding: '0 20px' }}>
-        {!token ? (
-          <Auth setToken={setToken} />
-        ) : (
-          <VideoUpload />
-        )}
-      </main>
+      <main style={{ width: '100%', maxWidth: '1100px', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+  {!token ? (
+    <Auth setToken={setToken} />
+  ) : (
+    <>
+      <VideoUpload />
+      <div id="todo-section">
+        <TodoList />
+      </div>
+    </>
+  )}
+</main>
       {token && <ChatBot />}
     </div>
   );

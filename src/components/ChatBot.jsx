@@ -50,7 +50,7 @@ const ChatBot = () => {
             <button onClick={() => setIsOpen(false)}>✕</button>
           </div>
           <div className="chat-messages">
-            {messages.map((m, i) => renderMessage(m))}  
+            {messages.map((m, i) => renderMessage(m, i))}  
             {loading && <div className="message ai">Thinking...</div>}
           </div>
           <div className="chat-input">
