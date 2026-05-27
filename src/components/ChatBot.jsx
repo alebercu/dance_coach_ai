@@ -4,6 +4,7 @@ import { marked } from 'marked';
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState([{ role: 'ai', text: 'Hello! I am your AI dance coach. How can I help you today?' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,31 +37,53 @@ const ChatBot = () => {
         />
       );
     }
-    return <div className="message user">{m.text}</div>;
+    return <div key={i} className="message user">{m.text}</div>;
   };
 
   return (
-    <div className={`chatbot-container ${isOpen ? 'open' : ''}`}>
+    <div className={`chatbot-container ${isOpen ? 'open' : ''} ${isExpanded ? 'expanded' : ''}`}>
       {!isOpen ? (
-        <button className="chat-toggle" onClick={() => setIsOpen(true)}>Coach AI</button>
+        <button className="chat-toggle" onClick={() => setIsOpen(true)}>💬 Coach AI</button>
       ) : (
         <div className="chat-window card">
           <div className="chat-header">
-            <h4>Coach AI</h4>
-            <button onClick={() => setIsOpen(false)}>✕</button>
+            <h4 style={{ margin: 0 }}>Coach AI</h4>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                title={isExpanded ? 'Minimize' : 'Expand'}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--muted)', fontSize: '1.1rem', padding: '0 4px',
+                  lineHeight: 1
+                }}
+              >
+                {isExpanded ? '⊡' : '⊞'}
+              </button>
+              <button
+                onClick={() => { setIsOpen(false); setIsExpanded(false); }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--muted)', fontSize: '1.1rem', padding: '0 4px',
+                  lineHeight: 1
+                }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <div className="chat-messages">
-            {messages.map((m, i) => renderMessage(m, i))}  
+            {messages.map((m, i) => renderMessage(m, i))}
             {loading && <div className="message ai">Thinking...</div>}
           </div>
           <div className="chat-input">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage()}  // ← bonus: Enter trimite
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Ask about your progress..."
             />
-            <button onClick={sendMessage}>Send</button>
+            <button className="secondary-button" onClick={sendMessage}>Send</button>
           </div>
         </div>
       )}
@@ -69,8 +92,10 @@ const ChatBot = () => {
 };
 
 export default ChatBot;
+
 // import React, { useState } from 'react';
 // import axios from 'axios';
+// import { marked } from 'marked';
 
 // const ChatBot = () => {
 //   const [isOpen, setIsOpen] = useState(false);
@@ -80,12 +105,10 @@ export default ChatBot;
 
 //   const sendMessage = async () => {
 //     if (!input.trim()) return;
-    
 //     const newMessages = [...messages, { role: 'user', text: input }];
 //     setMessages(newMessages);
 //     setInput('');
 //     setLoading(true);
-
 //     try {
 //       const token = localStorage.getItem('token');
 //       const res = await axios.post('http://localhost:5000/ask-coach', { message: input }, {
@@ -98,10 +121,23 @@ export default ChatBot;
 //     setLoading(false);
 //   };
 
+//   const renderMessage = (m, i) => {
+//     if (m.role === 'ai') {
+//       return (
+//         <div
+//           key={i}
+//           className="message ai"
+//           dangerouslySetInnerHTML={{ __html: marked.parse(m.text) }}
+//         />
+//       );
+//     }
+//     return <div className="message user">{m.text}</div>;
+//   };
+
 //   return (
 //     <div className={`chatbot-container ${isOpen ? 'open' : ''}`}>
 //       {!isOpen ? (
-//         <button className="chat-toggle" onClick={() => setIsOpen(true)}> Coach AI</button>
+//         <button className="chat-toggle" onClick={() => setIsOpen(true)}>Coach AI</button>
 //       ) : (
 //         <div className="chat-window card">
 //           <div className="chat-header">
@@ -109,13 +145,16 @@ export default ChatBot;
 //             <button onClick={() => setIsOpen(false)}>✕</button>
 //           </div>
 //           <div className="chat-messages">
-//             {messages.map((m, i) => (
-//               <div key={i} className={`message ${m.role}`}>{m.text}</div>
-//             ))}
+//             {messages.map((m, i) => renderMessage(m, i))}  
 //             {loading && <div className="message ai">Thinking...</div>}
 //           </div>
 //           <div className="chat-input">
-//             <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask about your progress..." />
+//             <input
+//               value={input}
+//               onChange={e => setInput(e.target.value)}
+//               onKeyDown={e => e.key === 'Enter' && sendMessage()}  // ← bonus: Enter trimite
+//               placeholder="Ask about your progress..."
+//             />
 //             <button onClick={sendMessage}>Send</button>
 //           </div>
 //         </div>
