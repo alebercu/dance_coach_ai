@@ -317,6 +317,72 @@ def ask_coach():
             return jsonify({"answer": "I'm a bit overwhelmed with requests! Please wait a minute and ask me again. 💃"}), 429
         print(f"Chat Error: {e}")
         return jsonify({"answer": "I'm having some technical issues. Please try again."}), 500
+    
+
+@app.route('/todos', methods=['GET'])
+@jwt_required()
+def get_todos():
+    try:
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, text, done FROM todos WHERE user_id = %s ORDER BY created_at ASC", (user_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify([{"id": r[0], "text": r[1], "done": r[2]} for r in rows]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/todos', methods=['POST'])
+@jwt_required()
+def add_todo():
+    try:
+        user_id = int(get_jwt_identity())
+        text = request.json.get('text')
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO todos (user_id, text, done) VALUES (%s, %s, false) RETURNING id", (user_id, text))
+        new_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"id": new_id, "text": text, "done": False}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/todos/<int:todo_id>', methods=['PATCH'])
+@jwt_required()
+def toggle_todo(todo_id):
+    try:
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE todos SET done = NOT done WHERE id = %s AND user_id = %s RETURNING done", (todo_id, user_id))
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not result:
+            return jsonify({"error": "Not found"}), 404
+        return jsonify({"done": result[0]}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/todos/<int:todo_id>', methods=['DELETE'])
+@jwt_required()
+def delete_todo(todo_id):
+    try:
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400    
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
