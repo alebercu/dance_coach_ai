@@ -296,7 +296,8 @@ def ask_coach():
         #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
         # prompt += f"Student asks: {user_message}"
 
-        sys_message = SystemMessage(content="You are a professional dancesport coach. Answer friendly and constructively, but keep it short. Keep in mind what dance the last result is for and provide actionable feedback based on the score and error details.")
+        sys_message = SystemMessage(content="""You are a professional dancesport coach. 
+        Respond in Markdown format. Use **bold** for key terms, bullet points for tips, and keep responses concise and friendly.""")
         hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
         user_message = HumanMessage(content=f"Student asks: {user_message}")
 

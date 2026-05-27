@@ -438,12 +438,37 @@ p { margin: 0; color: var(--muted); }
   background: var(--accent);
   color: white;
 }
-
 .message.ai {
   align-self: flex-start;
   background: var(--surface-soft);
   color: var(--text-h);
   border: 1px solid var(--border);
+  max-width: 85%;        /* ← puțin mai lat pentru conținut rich */
+  word-break: break-word;
+}
+
+.message.ai p {
+  margin: 0 0 6px;
+  white-space: normal;
+}
+
+.message.ai ul, .message.ai ol {
+  margin: 6px 0 6px 16px;
+  padding: 0;
+}
+
+.message.ai li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.message.ai strong {
+  font-weight: 600;
+}
+
+/* ultimul <p> fără margin jos */
+.message.ai p:last-child {
+  margin-bottom: 0;
 }
 
 .chat-input {
