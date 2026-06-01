@@ -274,50 +274,170 @@ def get_results():
         return jsonify({"error": str(e)}), 400
     
 
+# @app.route('/ask-coach', methods=['POST'])
+# @jwt_required()
+# def ask_coach():
+#     try:
+#         user_id = int(get_jwt_identity())
+#         user_message = request.json.get('message')
+
+#         # 1. Luăm contextul din DB
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+#         cur.execute("SELECT score, details FROM dance_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+#         last_result = cur.fetchone()
+#         cur.close()
+#         conn.close()
+
+#         # 2. Construim un singur text (Prompt) care conține totul
+#         # Așa nu mai avem nevoie de SystemMessage sau HumanMessage
+#         # prompt = "You are a professional dance coach. Answer ONLY in English.\n"
+#         # if last_result:
+#         #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
+#         # prompt += f"Student asks: {user_message}"
+
+#         sys_message = SystemMessage(content="""You are a professional dancesport coach. 
+#         Respond in Markdown format. Use **bold** for key terms, bullet points for tips, and keep responses concise and friendly.""")
+#         hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
+#         user_message = HumanMessage(content=f"Student asks: {user_message}")
+
+#         # THE NEW 2026 WAY:
+#         # response = client.models.generate_content(
+#         #     model=MODEL_ID,
+#         #     contents=prompt
+#         # )
+
+#         response = model.invoke([sys_message, hist_message, user_message] if hist_message else [sys_message, user_message])
+        
+#         return jsonify({"answer": response.content})
+
+#     except Exception as e:
+
+#         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+#             return jsonify({"answer": "I'm a bit overwhelmed with requests! Please wait a minute and ask me again. 💃"}), 429
+#         print(f"Chat Error: {e}")
+#         return jsonify({"answer": "I'm having some technical issues. Please try again."}), 500
+
 @app.route('/ask-coach', methods=['POST'])
 @jwt_required()
 def ask_coach():
     try:
         user_id = int(get_jwt_identity())
-        user_message = request.json.get('message')
+        user_message_text = request.json.get('message')
 
-        # 1. Luăm contextul din DB
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT score, details FROM dance_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+
+        # Ultimul rezultat de dans (context)
+        cur.execute("""
+            SELECT score, details, dance_name, dance_date 
+            FROM dance_results 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC LIMIT 1
+        """, (user_id,))
         last_result = cur.fetchone()
+
+        # Istoricul conversației (ultimele 20 mesaje)
+        cur.execute("""
+            SELECT role, content FROM chat_messages
+            WHERE user_id = %s
+            ORDER BY created_at DESC LIMIT 20
+        """, (user_id,))
+        history_rows = cur.fetchall()
+        history_rows.reverse()  # cronologic
+
+        # Salvează mesajul userului
+        cur.execute(
+            "INSERT INTO chat_messages (user_id, role, content) VALUES (%s, %s, %s)",
+            (user_id, 'user', user_message_text)
+        )
+        conn.commit()
+
+        # Construiește mesajele pentru LLM
+        sys_content = """You are a professional dancesport coach.
+Respond in Markdown format. Use **bold** for key terms, 
+bullet points for tips, and keep responses concise and friendly.
+You have access to the student's dance history and can reference 
+past results when relevant."""
+
+        if last_result:
+            sys_content += f"""
+
+Student's most recent session: {last_result[2]} on {last_result[3]}, 
+Score: {last_result[0]}%, Details: {last_result[1]}."""
+
+        messages_for_llm = [SystemMessage(content=sys_content)]
+
+        # Adaugă istoricul
+        for role, content in history_rows:
+            if role == 'user':
+                messages_for_llm.append(HumanMessage(content=content))
+            else:
+                messages_for_llm.append(ChatMessage(role='assistant', content=content))
+
+        # Adaugă mesajul curent
+        messages_for_llm.append(HumanMessage(content=user_message_text))
+
+        # Răspuns LLM
+        response = model.invoke(messages_for_llm)
+        answer = response.content
+
+        # Salvează răspunsul AI
+        cur.execute(
+            "INSERT INTO chat_messages (user_id, role, content) VALUES (%s, %s, %s)",
+            (user_id, 'assistant', answer)
+        )
+        conn.commit()
         cur.close()
         conn.close()
 
-        # 2. Construim un singur text (Prompt) care conține totul
-        # Așa nu mai avem nevoie de SystemMessage sau HumanMessage
-        # prompt = "You are a professional dance coach. Answer ONLY in English.\n"
-        # if last_result:
-        #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
-        # prompt += f"Student asks: {user_message}"
-
-        sys_message = SystemMessage(content="""You are a professional dancesport coach. 
-        Respond in Markdown format. Use **bold** for key terms, bullet points for tips, and keep responses concise and friendly.""")
-        hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
-        user_message = HumanMessage(content=f"Student asks: {user_message}")
-
-        # THE NEW 2026 WAY:
-        # response = client.models.generate_content(
-        #     model=MODEL_ID,
-        #     contents=prompt
-        # )
-
-        response = model.invoke([sys_message, hist_message, user_message] if hist_message else [sys_message, user_message])
-        
-        return jsonify({"answer": response.content})
+        return jsonify({"answer": answer})
 
     except Exception as e:
-
         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-            return jsonify({"answer": "I'm a bit overwhelmed with requests! Please wait a minute and ask me again. 💃"}), 429
+            return jsonify({"answer": "I'm overwhelmed! Please wait a minute. 💃"}), 429
         print(f"Chat Error: {e}")
         return jsonify({"answer": "I'm having some technical issues. Please try again."}), 500
     
+
+@app.route('/chat-history', methods=['GET'])
+@jwt_required()
+def get_chat_history():
+    try:
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT role, content, created_at 
+            FROM chat_messages
+            WHERE user_id = %s
+            ORDER BY created_at ASC
+        """, (user_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify([
+            {"role": r[0], "text": r[1], "created_at": r[2].isoformat()}
+            for r in rows
+        ]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400    
+    
+
+@app.route('/chat-history', methods=['DELETE'])
+@jwt_required()
+def clear_chat_history():
+    try:
+        user_id = int(get_jwt_identity())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM chat_messages WHERE user_id = %s", (user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "History cleared"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400    
 
 @app.route('/todos', methods=['GET'])
 @jwt_required()
