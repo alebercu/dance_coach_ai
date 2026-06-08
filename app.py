@@ -47,32 +47,6 @@ detector = vision.PoseLandmarker.create_from_options(options)
 
 
 
-# def ask_gemini_direct(prompt):
-#     api_key = "AIzaSyAiUAMzrHLksXM32y77lxhd8yYFyI6JlgI"
-    
-#     # Lista de URL-uri posibile (Google e uneori inconsistent cu versiunile)
-#     endpoints = [
-#         f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
-#         f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
-#     ]
-    
-#     headers = {'Content-Type': 'application/json'}
-#     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-
-#     for url in endpoints:
-#         try:
-#             response = requests.post(url, headers=headers, json=payload)
-#             res_json = response.json()
-            
-#             if response.status_code == 200:
-#                 return res_json['candidates'][0]['content']['parts'][0]['text']
-#             else:
-#                 print(f"Tried {url}, got {response.status_code}")
-#                 continue # Încearcă următorul URL din listă
-#         except:
-#             continue
-            
-#     return "I couldn't reach any of my AI models. Please check your API key and internet connection."
 
 def get_angles_from_landmarks(landmarks):
     """Calculează unghiurile folosind obiectele de tip landmark de la Tasks Vision."""
@@ -274,49 +248,7 @@ def get_results():
         return jsonify({"error": str(e)}), 400
     
 
-# @app.route('/ask-coach', methods=['POST'])
-# @jwt_required()
-# def ask_coach():
-#     try:
-#         user_id = int(get_jwt_identity())
-#         user_message = request.json.get('message')
 
-#         # 1. Luăm contextul din DB
-#         conn = get_db_connection()
-#         cur = conn.cursor()
-#         cur.execute("SELECT score, details FROM dance_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
-#         last_result = cur.fetchone()
-#         cur.close()
-#         conn.close()
-
-#         # 2. Construim un singur text (Prompt) care conține totul
-#         # Așa nu mai avem nevoie de SystemMessage sau HumanMessage
-#         # prompt = "You are a professional dance coach. Answer ONLY in English.\n"
-#         # if last_result:
-#         #     prompt += f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.\n"
-#         # prompt += f"Student asks: {user_message}"
-
-#         sys_message = SystemMessage(content="""You are a professional dancesport coach. 
-#         Respond in Markdown format. Use **bold** for key terms, bullet points for tips, and keep responses concise and friendly.""")
-#         hist_message = HumanMessage(content=f"Student's last score: {last_result[0]}%. Errors: {last_result[1]}.") if last_result else None
-#         user_message = HumanMessage(content=f"Student asks: {user_message}")
-
-#         # THE NEW 2026 WAY:
-#         # response = client.models.generate_content(
-#         #     model=MODEL_ID,
-#         #     contents=prompt
-#         # )
-
-#         response = model.invoke([sys_message, hist_message, user_message] if hist_message else [sys_message, user_message])
-        
-#         return jsonify({"answer": response.content})
-
-#     except Exception as e:
-
-#         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-#             return jsonify({"answer": "I'm a bit overwhelmed with requests! Please wait a minute and ask me again. 💃"}), 429
-#         print(f"Chat Error: {e}")
-#         return jsonify({"answer": "I'm having some technical issues. Please try again."}), 500
 
 @app.route('/ask-coach', methods=['POST'])
 @jwt_required()
@@ -328,61 +260,55 @@ def ask_coach():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Ultimul rezultat de dans (context)
         cur.execute("""
             SELECT score, details, dance_name, dance_date 
             FROM dance_results 
             WHERE user_id = %s 
-            ORDER BY created_at DESC LIMIT 1
+            ORDER BY created_at DESC LIMIT 10
         """, (user_id,))
-        last_result = cur.fetchone()
+        all_results = cur.fetchall()
 
-        # Istoricul conversației (ultimele 20 mesaje)
         cur.execute("""
             SELECT role, content FROM chat_messages
             WHERE user_id = %s
             ORDER BY created_at DESC LIMIT 20
         """, (user_id,))
         history_rows = cur.fetchall()
-        history_rows.reverse()  # cronologic
+        history_rows = list(reversed(history_rows))  # cronologic
 
-        # Salvează mesajul userului
         cur.execute(
             "INSERT INTO chat_messages (user_id, role, content) VALUES (%s, %s, %s)",
             (user_id, 'user', user_message_text)
         )
         conn.commit()
 
-        # Construiește mesajele pentru LLM
         sys_content = """You are a professional dancesport coach.
-Respond in Markdown format. Use **bold** for key terms, 
+Respond in Markdown format. Use **bold** for key terms,
 bullet points for tips, and keep responses concise and friendly.
-You have access to the student's dance history and can reference 
+You have access to the student's dance history and can reference
 past results when relevant."""
 
-        if last_result:
-            sys_content += f"""
-
-Student's most recent session: {last_result[2]} on {last_result[3]}, 
-Score: {last_result[0]}%, Details: {last_result[1]}."""
+        if all_results:
+            sys_content += "\n\nStudent's recent dance sessions (most recent first):\n"
+            for r in all_results:
+                score, details, dance_name, dance_date = r
+                sys_content += f"- {dance_name} on {dance_date}: Score {score}%, Details: {details}\n"
+            sys_content += "\nWhen the student asks about a specific dance, use that dance's data."
 
         messages_for_llm = [SystemMessage(content=sys_content)]
 
-        # Adaugă istoricul
-        for role, content in history_rows:
+        for row in history_rows:
+            role, content = row  # unpacking explicit
             if role == 'user':
                 messages_for_llm.append(HumanMessage(content=content))
             else:
                 messages_for_llm.append(ChatMessage(role='assistant', content=content))
 
-        # Adaugă mesajul curent
         messages_for_llm.append(HumanMessage(content=user_message_text))
 
-        # Răspuns LLM
         response = model.invoke(messages_for_llm)
         answer = response.content
 
-        # Salvează răspunsul AI
         cur.execute(
             "INSERT INTO chat_messages (user_id, role, content) VALUES (%s, %s, %s)",
             (user_id, 'assistant', answer)
