@@ -28,3 +28,5 @@ __pycache__/
 *.pyc
 .DS_Store
 temp_*.mp4
+
+/*.env

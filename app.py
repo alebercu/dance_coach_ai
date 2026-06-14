@@ -1,5 +1,6 @@
 import os
 import cv2
+from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify
@@ -20,23 +21,20 @@ import requests # Asigură-te că ai acest import sus
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage, ChatMessage
 
+load_dotenv()
 
 
 
-#client = genai.Client(api_key="AIzaSyAs2mOppo9Cw0IuDeAQA7EkCPK56LReMBc")
-
-# Choose a stable model from your list
-#MODEL_ID = "gemini-2.0-flash-lite"
 OLLAMNA_MODEL = "gpt-oss:120b-cloud"
 model = ChatOllama(model=OLLAMNA_MODEL)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7) # Token-ul e bun 7 zile
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7) 
 
-# --- CONFIGURARE MEDIAPIPE VISION ---
-model_path = 'pose_landmarker_heavy.task' # Asigură-te că fișierul e aici!
+
+model_path = 'pose_landmarker_heavy.task' 
 
 base_options = python.BaseOptions(model_asset_path=model_path)
 options = vision.PoseLandmarkerOptions(
@@ -49,14 +47,14 @@ detector = vision.PoseLandmarker.create_from_options(options)
 
 
 def get_angles_from_landmarks(landmarks):
-    """Calculează unghiurile folosind obiectele de tip landmark de la Tasks Vision."""
+    
     def calc_angle(a, b, c):
         ba = np.array([a.x - b.x, a.y - b.y])
         bc = np.array([c.x - b.x, c.y - b.y])
         cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
         return np.degrees(np.arccos(np.clip(cosine_angle, -1.0, 1.0)))
 
-    # Landmark-urile în noul API sunt accesate prin index (0-32)
+    
     # 12, 14, 16 = Cot Drept | 11, 13, 15 = Cot Stâng
     # 24, 26, 28 = Genunchi Drept | 23, 25, 27 = Genunchi Stâng
     try:
@@ -66,10 +64,10 @@ def get_angles_from_landmarks(landmarks):
         gen_l = calc_angle(landmarks[23], landmarks[25], landmarks[27])
         return [cot_r, cot_l, gen_r, gen_l]
     except:
-        return [180, 180, 180, 180] # Fallback dacă nu vede corpul bine
+        return [180, 180, 180, 180] 
 
 def process_video_tasks(video_path):
-    """Procesează video folosind noul API Mediapipe Vision."""
+    
     cap = cv2.VideoCapture(video_path)
     signature = []
     
@@ -84,24 +82,24 @@ def process_video_tasks(video_path):
         detection_result = detector.detect(mp_image)
         
         if detection_result.pose_landmarks:
-            # Luăm primul set de landmarks detectat (primul om din cadru)
+            # primul set de landmarks
             angles = get_angles_from_landmarks(detection_result.pose_landmarks[0])
             signature.append(angles)
             
     cap.release()
     return np.array(signature)
 
-# Configurează un secret key pentru token-uri
-app.config['JWT_SECRET_KEY'] = 'secret_key_foarte_greu_de_ghicit'
+
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
-app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # DESCHIDE POARTA ASTA
-app.config['JWT_CSRF_CHECK_FORM'] = False      # ȘI PE ASTA
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False  
+app.config['JWT_CSRF_CHECK_FORM'] = False      
 jwt = JWTManager(app)
 @jwt.invalid_token_loader
 def my_invalid_token_callback(error_string):
-    print(f"JWT Invalid Error: {error_string}") # Va apărea în terminalul VS Code
+    print(f"JWT Invalid Error: {error_string}") 
     return jsonify({'message': f'Token invalid: {error_string}'}), 422
 
 @jwt.unauthorized_loader
@@ -109,7 +107,7 @@ def my_unauthorized_callback(error_string):
     print(f"JWT Unauthorized Error: {error_string}")
     return jsonify({'message': f'Lipseste token-ul: {error_string}'}), 401
 
-# Conexiunea la PostgreSQL (Modifică cu datele tale din pgAdmin)
+
 def get_db_connection():
     return psycopg2.connect(
         host="localhost",
@@ -146,7 +144,7 @@ def login():
     conn.close()
 
     if user and bcrypt.check_password_hash(user[1], data['password']):
-        # Salvăm ID-ul ca string în token pentru consistență
+        
         access_token = create_access_token(identity=str(user[0])) 
         return jsonify(access_token=access_token), 200
 
@@ -174,14 +172,14 @@ def analyze():
         if len(sig_student) < 5 or len(sig_prof) < 5:
             return jsonify({"error": "Video too short or body not detected"}), 400
 
-        # Aliniere DTW
+        
         distance, path = fastdtw(sig_prof, sig_student, dist=euclidean)
 
-        # Feedback
+        
         diffs = np.abs(sig_prof[[p[0] for p in path]] - sig_student[[p[1] for p in path]])
         avg_diffs = np.mean(diffs, axis=0)
         
-        # Scorul: ajustăm normalizarea (50 este o eroare mare medie per unghi)
+        
         score = max(0, 100 - (distance / (5 * len(sig_prof))))
         
         labels = ['Right Elbow', 'Left Elbow', 'Right Knee', 'Left Knee']
@@ -206,7 +204,7 @@ def analyze():
 @jwt_required()
 def save_result():
     try:
-        # Convertim explicit identity la int
+        
         user_id = int(get_jwt_identity()) 
         data = request.json
         
@@ -233,7 +231,7 @@ def save_result():
 @jwt_required()
 def get_results():
     try:
-        # Convertim explicit identity la int
+        
         user_id = int(get_jwt_identity())
         conn = get_db_connection()
         cur = conn.cursor()
@@ -298,7 +296,7 @@ past results when relevant."""
         messages_for_llm = [SystemMessage(content=sys_content)]
 
         for row in history_rows:
-            role, content = row  # unpacking explicit
+            role, content = row  
             if role == 'user':
                 messages_for_llm.append(HumanMessage(content=content))
             else:
