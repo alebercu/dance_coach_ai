@@ -11,12 +11,12 @@ const ChatBot = () => {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Scroll automat la ultimul mesaj
+  
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Încarcă istoricul când se deschide chat-ul (o singură dată)
+  
   useEffect(() => {
     if (isOpen && !historyLoaded) {
       loadHistory();

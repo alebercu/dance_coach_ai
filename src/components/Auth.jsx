@@ -11,13 +11,13 @@ const Auth = ({ setToken }) => {
     try {
       const res = await axios.post(`http://localhost:5000${endpoint}`, formData);
       if (isLogin) {
-    // ASIGURĂ-TE că res.data.access_token este un string curat
+    
     const token = res.data.access_token;
-    localStorage.setItem('token', token); // Fără JSON.stringify!
+    localStorage.setItem('token', token); 
     setToken(token);
 
       } else {
-        alert("Account created successfully! Please log in.");
+        
         setIsLogin(true);
       }
     } catch (err) {

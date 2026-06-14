@@ -17,18 +17,17 @@ const VideoUpload = () => {
     return;
   }
 
-  // Debug: vedem ce trimitem
-  console.log("Trimit token:", token);
+  
 
   try {
     const response = await axios.post('http://localhost:5000/save-result', {
       dance_name: danceName,
       dance_date: danceDate,
       score: results.score,
-      details: results.details // Array-ul cu cot, genunchi etc.
+      details: results.details 
     }, {
       headers: { 
-        'Authorization': `Bearer ${token.trim()}`, // Trim elimină spații invizibile
+        'Authorization': `Bearer ${token.trim()}`, 
         'Content-Type': 'application/json'
       }
     });
@@ -37,7 +36,7 @@ const VideoUpload = () => {
     setShowSaveForm(false);
   } catch (err) {
     console.error("Eroare la salvare:", err.response?.data);
-    // Dacă eroarea e 422, mesajul din backend de la pasul 1 va apărea aici
+    
     alert("Eroare: " + (err.response?.data?.message || "Eroare de autentificare"));
   }
 };

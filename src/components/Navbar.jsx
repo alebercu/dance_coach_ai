@@ -4,7 +4,7 @@ import axios from 'axios';
 const Navbar = ({ onLogout }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedResult, setSelectedResult] = useState(null); // Rezultatul pt care vedem detalii
+  const [selectedResult, setSelectedResult] = useState(null); 
 
   const fetchHistory = async () => {
     setLoading(true);
