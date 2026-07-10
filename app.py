@@ -17,7 +17,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import json
 from google import genai
 from datetime import timedelta
-import requests # Asigură-te că ai acest import sus
+import requests 
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage, ChatMessage
 
@@ -222,7 +222,7 @@ def save_result():
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"message": "Rezultat salvat cu succes!"}), 201
+        return jsonify({"message": "Result saved successfully!"}), 201
     except Exception as e:
         print(f"Error saving: {e}")
         return jsonify({"error": str(e)}), 400
